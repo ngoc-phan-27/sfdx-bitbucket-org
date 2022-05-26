@@ -4,32 +4,127 @@
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
 image: atlassian/default-image:2
+definitions:
+    steps:
+        -step: &install-cli
+            script:
+                #Assign variables
+                - export CLIURL=https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
+                #Create sfdx directory
+                - mkdir ~/sfdx
+                #Install Salesforce CLI
+                - wget -qO- $CLIURL | tar xJ -C ~/sfdx --strip-components 1
+                - export PATH=~/sfdx/bin:$PATH
+                - sfdx --version
+                - sfdx plugins --core
+        -step: &check-int
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_INT --clientid $CONSUMER_KEY_INT --jwtkeyfile assets/server.key --username $USER_NAME_INTEGRATION --setalias INT
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --checkonly --wait 10 --deploydir $DEPLOYDIR --targetusername INT --testlevel $TESTLEVEL
+        -step: &check-uat
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_UAT --clientid $CONSUMER_KEY_UAT --jwtkeyfile assets/server.key --username $USER_NAME_UAT --setalias INT
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --checkonly --wait 10 --deploydir $DEPLOYDIR --targetusername UAT --testlevel $TESTLEVEL
+        -step: &check-prod
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_PROD --clientid $CONSUMER_KEY_PROD --jwtkeyfile assets/server.key --username $USER_NAME_PROD --setalias PROD
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --checkonly --wait 10 --deploydir $DEPLOYDIR --targetusername PROD --testlevel $TESTLEVEL
+        -step: &deploy-int
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_INT --clientid $CONSUMER_KEY_INT --jwtkeyfile assets/server.key --username $USER_NAME_INTEGRATION --setalias INT
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --wait 10 --deploydir $DEPLOYDIR --targetusername INT --testlevel $TESTLEVEL
+        -step: &deploy-uat
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_UAT --clientid $CONSUMER_KEY_UAT --jwtkeyfile assets/server.key --username $USER_NAME_UAT --setalias INT
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --wait 10 --deploydir $DEPLOYDIR --targetusername UAT --testlevel $TESTLEVEL
+        -step: &deploy-prod
+            script:
+                #Assign variables
+                - export SFDX_AUTOUPDATE_DISABLE=false
+                - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
+                - export SFDX_DOMAIN_RETRY=300
+                - export SFDX_DISABLE_APP_HUB=true
+                - export SFDX_LOG_LEVEL=DEBUG
+                - export DEPLOYDIR=src
+                - export TESTLEVEL=RunLocalTests
+                #Decrypt server key
+                - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                #Authorize target org
+                - sfdx auth:jwt:grant --instanceurl $ENDPOINT_PROD --clientid $CONSUMER_KEY_PROD --jwtkeyfile assets/server.key --username $USER_NAME_PROD --setalias PROD
+                #Example shows how to run a check-only deploy.
+                - sfdx force:mdapi:deploy --wait 10 --deploydir $DEPLOYDIR --targetusername PROD --testlevel $TESTLEVEL
 pipelines:
-  default: #These commands run for all branches unless specified otherwise
-    - step:
-        script:
-          #Assign variables
-          - export CLIURL=https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
-          - export SFDX_AUTOUPDATE_DISABLE=false
-          - export SFDX_USE_GENERIC_UNIX_KEYCHAIN=true
-          - export SFDX_DOMAIN_RETRY=300
-          - export SFDX_DISABLE_APP_HUB=true
-          - export SFDX_LOG_LEVEL=DEBUG
-          - export DEPLOYDIR=src
-          - export TESTLEVEL=RunLocalTests
-          #Create sfdx directory
-          - mkdir ~/sfdx
-          #Install Salesforce CLI
-          #By default, the script installs the current version of Salesforce CLI. To install the release candidate, set the DX_CLI_URL_CUSTOM local variable to the appropriate URL
-          - wget -qO- ${DX_CLI_URL_CUSTOM-$CLIURL} | tar xJ -C ~/sfdx --strip-components 1
-          - export PATH=~/sfdx/bin:$PATH
-          - sfdx --version
-          - sfdx plugins --core
-          #Decrypt server key
-          - openssl enc -nosalt -aes-256-cbc -d -in assets/server.key.enc -out assets/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
-          #Authorize target org
-          - sfdx auth:jwt:grant --instanceurl $ENDPOINT --clientid $CONSUMER_KEY --jwtkeyfile assets/server.key --username $USER_NAME --setalias UAT
-          #Deploy to target deployment org and run unit tests
-          - sfdx force:mdapi:deploy --wait 10 --deploydir $DEPLOYDIR --targetusername UAT --testlevel $TESTLEVEL
-          #Example shows how to run a check-only deploy.
-          #- sfdx force:mdapi:deploy --checkonly --wait 10 --deploydir $DEPLOYDIR --targetusername UAT --testlevel $TESTLEVEL
+    branches:
+        develop:
+            - step: *install-cli
+            - step: *check-int
+            - step: *deploy-int
+        integration:
+            - step: *install-cli
+            - step: *check-uat
+            - step: *deploy-uat
+        uat:
+            - step: *install-cli
+            - step: *check-prod
+            - step: *deploy-prod
+                    trigger: manual
